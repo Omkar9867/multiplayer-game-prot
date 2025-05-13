@@ -1,0 +1,18 @@
+{
+  "name": "multiplayer_game_prototype",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "watch": "tsc -w",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "ts": "^0.2.2"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
