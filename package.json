@@ -3,16 +3,18 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "watch": "tsc -w",
+    "watch": "node watch.js",
+    "server": "node server.mjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "description": "",
-  "dependencies": {
-    "ts": "^0.2.2"
-  },
   "devDependencies": {
+    "@types/ws": "^8.18.1",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "ws": "^8.18.2"
   }
 }
