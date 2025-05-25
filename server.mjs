@@ -1,5 +1,6 @@
 import { WebSocketServer } from "ws";
-import { SERVER_PORT, WORLD_HEIGHT, WORLD_WIDTH } from "./common.mjs";
+import { SERVER_FPS, SERVER_PORT, WORLD_HEIGHT, WORLD_WIDTH, } from "common.mjs";
+let eventQueue = []; //This will have multiple events like PLayerStartMoving etc.
 const players = new Map();
 let idCounter = 0;
 const wss = new WebSocketServer({
@@ -7,21 +8,62 @@ const wss = new WebSocketServer({
 });
 wss.on("connection", (ws) => {
     const id = idCounter++;
+    const x = Math.random() * WORLD_WIDTH;
+    const y = Math.random() * WORLD_HEIGHT;
     const player = {
+        ws,
         id,
-        x: Math.random() * WORLD_WIDTH,
-        y: Math.random() * WORLD_HEIGHT,
+        x,
+        y,
     };
-    players.set(ws, player);
+    players.set(id, player);
     console.log(`Player ${id} connected`);
-    ws.send(JSON.stringify({
-        kind: "Hello",
-        id,
-    }));
-    ws.on('close', () => {
+    eventQueue.push({
+        kind: "PlayerJoined",
+        player: {
+            id,
+            x: x,
+            y: y,
+        },
+    });
+    ws.on("close", () => {
         console.log(`Player ${id} disconnected`);
-        players.delete(ws);
+        players.delete(id);
     });
 });
+function tick() {
+    for (let event of eventQueue) {
+        switch (event.kind) {
+            case "PlayerJoined":
+                {
+                    const joinedPlayer = players.get(event.player.id);
+                    if (!joinedPlayer)
+                        continue;
+                    joinedPlayer.ws.send(JSON.stringify({
+                        kind: "Hello",
+                        id: joinedPlayer.id,
+                    }));
+                    const eventString = JSON.stringify(event);
+                    players.forEach((otherPlayer) => {
+                        joinedPlayer.ws.send(JSON.stringify({
+                            kind: "PlayerJoined",
+                            player: {
+                                id: otherPlayer.id,
+                                x: otherPlayer.x,
+                                y: otherPlayer.y,
+                            },
+                        }));
+                        if (otherPlayer.id !== joinedPlayer.id) {
+                            otherPlayer.ws.send(eventString);
+                        }
+                    });
+                }
+                break;
+        }
+    }
+    eventQueue.length = 0; // Clear the event queue after processing
+    setTimeout(tick, 1000 / SERVER_FPS);
+}
+setTimeout(tick, 1000 / SERVER_FPS);
 console.log(`Listening to ws://localhost${SERVER_PORT}`);
 //# sourceMappingURL=server.mjs.map
