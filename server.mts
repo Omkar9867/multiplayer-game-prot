@@ -1,20 +1,19 @@
 import { WebSocketServer, WebSocket } from "ws";
 import {
+  Player,
   PlayerJoined,
   SERVER_FPS,
   SERVER_PORT,
   WORLD_HEIGHT,
   WORLD_WIDTH,
-} from "common.mjs";
+} from "./common.mjs";
 
-interface Player {
+interface PlayerWithWs extends Player {
   ws: WebSocket;
-  id: number;
-  x: number;
-  y: number;
 }
+
 let eventQueue: PlayerJoined[] = []; //This will have multiple events like PLayerStartMoving etc.
-const players = new Map<number, Player>();
+const players = new Map<number, PlayerWithWs>();
 let idCounter = 0;
 const wss = new WebSocketServer({
   port: SERVER_PORT,

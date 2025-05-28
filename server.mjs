@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { SERVER_FPS, SERVER_PORT, WORLD_HEIGHT, WORLD_WIDTH, } from "common.mjs";
+import { SERVER_FPS, SERVER_PORT, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
 let eventQueue = []; //This will have multiple events like PLayerStartMoving etc.
 const players = new Map();
 let idCounter = 0;
