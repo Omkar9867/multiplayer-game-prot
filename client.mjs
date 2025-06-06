@@ -1,4 +1,4 @@
-import { isHello, isPlayerJoined, PLAYER_SIZE, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
+import { isHello, isPlayerJoined, isPlayerLeft, PLAYER_SIZE, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
 (async () => {
     //Canvas
     const gameCanvas = document.getElementById("game");
@@ -11,6 +11,7 @@ import { isHello, isPlayerJoined, PLAYER_SIZE, WORLD_HEIGHT, WORLD_WIDTH, } from
         throw new Error("2D is not supported");
     let myId;
     const players = new Map();
+    // WebSocket
     const ws = new WebSocket("ws://localhost:6970");
     ws.addEventListener("close", (e) => console.log("Close Event", e));
     ws.addEventListener("error", (e) => console.log("Error Event", e));
@@ -34,6 +35,9 @@ import { isHello, isPlayerJoined, PLAYER_SIZE, WORLD_HEIGHT, WORLD_WIDTH, } from
                     y: message.player.y,
                 });
             }
+            else if (isPlayerLeft(message)) {
+                players.delete(message.player.id);
+            }
             else {
                 console.log("Unknown message", message);
                 ws.close();
@@ -46,16 +50,16 @@ import { isHello, isPlayerJoined, PLAYER_SIZE, WORLD_HEIGHT, WORLD_WIDTH, } from
         const delta = (timestamp - previousTimestamp) / 1000; // Convert to seconds
         previousTimestamp = timestamp;
         // render all of the players here
-        ctx.fillStyle = 'white';
+        ctx.fillStyle = "white";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        ctx.fillStyle = 'red';
+        ctx.fillStyle = "red";
         players.forEach((player) => {
-            ctx.fillStyle = player.id === myId ? 'blue' : 'red';
+            ctx.fillStyle = player.id === myId ? "blue" : "red";
             ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
         });
         window.requestAnimationFrame(frame);
     };
-    window.requestAnimationFrame(timestamp => {
+    window.requestAnimationFrame((timestamp) => {
         previousTimestamp = timestamp;
         window.requestAnimationFrame(frame);
     });

@@ -42,3 +42,20 @@ export const isPlayerJoined = (arg: any): arg is PlayerJoined => {
     isNumber(arg.player.y)
   );
 };
+
+export interface PlayerLeft {
+  kind: "PlayerLeft";
+  player: {
+    id: number;
+  };
+}
+
+export const isPlayerLeft = (arg: any): arg is PlayerLeft => {
+  return (
+    arg &&
+    arg.kind === "PlayerLeft" &&
+    isNumber(arg.player.id)
+  );
+};
+
+export type Event = PlayerJoined | PlayerLeft

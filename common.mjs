@@ -16,4 +16,9 @@ export const isPlayerJoined = (arg) => {
         isNumber(arg.player.x) &&
         isNumber(arg.player.y));
 };
+export const isPlayerLeft = (arg) => {
+    return (arg &&
+        arg.kind === "PlayerLeft" &&
+        isNumber(arg.player.id));
+};
 //# sourceMappingURL=common.mjs.map

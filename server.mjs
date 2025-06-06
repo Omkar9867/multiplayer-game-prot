@@ -29,6 +29,12 @@ wss.on("connection", (ws) => {
     ws.on("close", () => {
         console.log(`Player ${id} disconnected`);
         players.delete(id);
+        eventQueue.push({
+            kind: "PlayerLeft",
+            player: {
+                id,
+            },
+        });
     });
 });
 function tick() {
@@ -54,6 +60,16 @@ function tick() {
                             },
                         }));
                         if (otherPlayer.id !== joinedPlayer.id) {
+                            otherPlayer.ws.send(eventString);
+                        }
+                    });
+                }
+                break;
+            case "PlayerLeft":
+                {
+                    const eventString = JSON.stringify(event);
+                    players.forEach((otherPlayer) => {
+                        if (otherPlayer.id !== event.player.id) {
                             otherPlayer.ws.send(eventString);
                         }
                     });

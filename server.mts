@@ -1,7 +1,9 @@
 import { WebSocketServer, WebSocket } from "ws";
 import {
+  Event,
   Player,
   PlayerJoined,
+  PlayerLeft,
   SERVER_FPS,
   SERVER_PORT,
   WORLD_HEIGHT,
@@ -12,7 +14,7 @@ interface PlayerWithWs extends Player {
   ws: WebSocket;
 }
 
-let eventQueue: PlayerJoined[] = []; //This will have multiple events like PLayerStartMoving etc.
+let eventQueue: Array<Event> = []; //This will have multiple events like PLayerStartMoving etc.
 const players = new Map<number, PlayerWithWs>();
 let idCounter = 0;
 const wss = new WebSocketServer({
@@ -42,6 +44,12 @@ wss.on("connection", (ws) => {
   ws.on("close", () => {
     console.log(`Player ${id} disconnected`);
     players.delete(id);
+    eventQueue.push({
+      kind: "PlayerLeft",
+      player: {
+        id,
+      },
+    });
   });
 });
 
@@ -76,6 +84,15 @@ function tick() {
           });
         }
         break;
+      case "PlayerLeft":
+        {
+          const eventString = JSON.stringify(event);
+        players.forEach((otherPlayer) => {
+          if (otherPlayer.id !== event.player.id) {
+            otherPlayer.ws.send(eventString);
+          }
+        });
+      } break;
     }
   }
   eventQueue.length = 0; // Clear the event queue after processing
