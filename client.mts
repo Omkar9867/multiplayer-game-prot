@@ -1,4 +1,5 @@
 import {
+  DEFAULT_MOVING,
   isHello,
   isPlayerJoined,
   isPlayerLeft,
@@ -42,6 +43,7 @@ import {
           id: message.player.id,
           x: message.player.x,
           y: message.player.y,
+          moving: DEFAULT_MOVING,
         });
       } else if (isPlayerLeft(message)) {
         players.delete(message.player.id);
