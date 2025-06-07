@@ -2,12 +2,13 @@ export const SERVER_PORT = 6970;
 export const WORLD_WIDTH = 800;
 export const WORLD_HEIGHT = 800;
 export const SERVER_FPS = 30;
+export const PLAYER_SPEED = 200;
 
 export const PLAYER_SIZE = 30;
 
-type Direction = "up" | "down" | "left" | "right";
+export type Direction = "up" | "down" | "left" | "right";
 
-type Moving = {
+export type Moving = {
   [key in Direction]: boolean;
 };
 
@@ -34,7 +35,7 @@ export const DIRECTION_VECTORS: {[key in Direction]: Vector2} = {
 }
 
 export const isDirection = (arg: any): arg is Direction => {
-  return DEFAULT_MOVING[arg as Direction] !== undefined;
+  return DIRECTION_VECTORS[arg as Direction] !== undefined;
 };
 
 export const isNumber = (arg: any): arg is number => {
@@ -107,9 +108,9 @@ export const isPlayerMoving = (arg: any): arg is PlayerMoving => {
   return (
     arg &&
     arg.kind === "PlayerMoving" &&
-    isNumber(arg.player.id) &&
-    isNumber(arg.player.x) &&
-    isNumber(arg.player.y) &&
+    isNumber(arg.id) &&
+    isNumber(arg.x) &&
+    isNumber(arg.y) &&
     typeof arg.start === "boolean" &&
     isDirection(arg.direction)
   );
@@ -127,7 +128,7 @@ export function updatePlayer(player: Player, deltaTime: number){
       dy += DIRECTION_VECTORS[dir].y
     }
   }
-  player.x += dx * deltaTime //* 100; // 100 pixels per second
-  player.y += dy * deltaTime //* 100; // 100 pixels per second
+  player.x += dx*PLAYER_SPEED * deltaTime
+  player.y += dy*PLAYER_SPEED * deltaTime 
 }
 

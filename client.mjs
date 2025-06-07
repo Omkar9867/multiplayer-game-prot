@@ -1,4 +1,10 @@
-import { isHello, isPlayerJoined, isPlayerLeft, PLAYER_SIZE, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
+import { isHello, isPlayerJoined, isPlayerLeft, isPlayerMoving, PLAYER_SIZE, updatePlayer, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
+const DIRECTION_KEYS = {
+    ArrowUp: "up",
+    ArrowDown: "down",
+    ArrowLeft: "left",
+    ArrowRight: "right",
+};
 (async () => {
     //Canvas
     const gameCanvas = document.getElementById("game");
@@ -28,15 +34,37 @@ import { isHello, isPlayerJoined, isPlayerLeft, PLAYER_SIZE, WORLD_HEIGHT, WORLD
             }
         }
         else {
+            const message = JSON.parse(e.data);
+            console.log("Received message", message);
             if (isPlayerJoined(message)) {
+                // Player_JOINED
                 players.set(message.player.id, {
                     id: message.player.id,
                     x: message.player.x,
                     y: message.player.y,
+                    moving: {
+                        up: false,
+                        down: false,
+                        left: false,
+                        right: false,
+                    },
                 });
             }
             else if (isPlayerLeft(message)) {
+                // Player_LEFT
                 players.delete(message.player.id);
+            }
+            else if (isPlayerMoving(message)) {
+                // Player_MOVING
+                const player = players.get(message.id);
+                if (!player) {
+                    console.log(`Player ${message.id} not found for moving message ${JSON.stringify(message)}`);
+                    ws.close();
+                    return;
+                }
+                player.moving[message.direction] = message.start;
+                player.x = message.x;
+                player.y = message.y;
             }
             else {
                 console.log("Unknown message", message);
@@ -47,13 +75,14 @@ import { isHello, isPlayerJoined, isPlayerLeft, PLAYER_SIZE, WORLD_HEIGHT, WORLD
     ws.addEventListener("open", (e) => console.log("Open Event", e));
     let previousTimestamp = 0;
     const frame = (timestamp) => {
-        const delta = (timestamp - previousTimestamp) / 1000; // Convert to seconds
+        const deltaTime = (timestamp - previousTimestamp) / 1000; // Convert to seconds
         previousTimestamp = timestamp;
         // render all of the players here
         ctx.fillStyle = "white";
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         ctx.fillStyle = "red";
         players.forEach((player) => {
+            updatePlayer(player, deltaTime);
             ctx.fillStyle = player.id === myId ? "blue" : "red";
             ctx.fillRect(player.x, player.y, PLAYER_SIZE, PLAYER_SIZE);
         });
@@ -62,6 +91,30 @@ import { isHello, isPlayerJoined, isPlayerLeft, PLAYER_SIZE, WORLD_HEIGHT, WORLD
     window.requestAnimationFrame((timestamp) => {
         previousTimestamp = timestamp;
         window.requestAnimationFrame(frame);
+    });
+    window.addEventListener("keydown", (e) => {
+        if (!e.repeat) {
+            const direction = DIRECTION_KEYS[e.code];
+            if (direction !== undefined) {
+                ws.send(JSON.stringify({
+                    kind: "AmmaMoving",
+                    start: true,
+                    direction,
+                }));
+            }
+        }
+    });
+    window.addEventListener("keyup", (e) => {
+        if (!e.repeat) {
+            const direction = DIRECTION_KEYS[e.code];
+            if (direction !== undefined) {
+                ws.send(JSON.stringify({
+                    kind: "AmmaMoving",
+                    start: false,
+                    direction,
+                }));
+            }
+        }
     });
 })();
 //# sourceMappingURL=client.mjs.map

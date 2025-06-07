@@ -2,6 +2,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import {
   DEFAULT_MOVING,
   Event,
+  isAmmaMoving,
   isPlayerMoving,
   Player,
   PlayerJoined,
@@ -33,7 +34,12 @@ wss.on("connection", (ws) => {
     id,
     x,
     y,
-    moving: DEFAULT_MOVING,
+    moving: {  //! to explore the logic why we remove DEFAULT_MOVING
+      up: false,
+      down: false,
+      left: false,
+      right: false,
+    },
   };
   players.set(id, player);
   console.log(`Player ${id} connected`);
@@ -45,16 +51,18 @@ wss.on("connection", (ws) => {
       y: y,
     },
   });
-  ws.on("message", (data) => {
-    const message = JSON.parse(data.toString());
-    if (isPlayerMoving(message)) {
-      if (message.id != id) {
-        console.log(
-          `Player ${id} tried to cheat by sending message ${message.id}`
-        );
-        ws.close();
-      }
-      eventQueue.push(message);
+  ws.addEventListener("message", (event) => {
+    const message = JSON.parse(event.data.toString());
+    if (isAmmaMoving(message)) {
+      console.log(`Received moving message player ${id}`, message);
+      eventQueue.push({
+        kind: "PlayerMoving",
+        id,
+        x: player.x,
+        y: player.y,
+        start: message.start,
+        direction: message.direction,
+      });
     } else {
       console.log(`Recieved bogus-amogus message from client ${id}`, message);
       ws.close();
@@ -118,10 +126,8 @@ function tick() {
         if (!player) continue;
         player.moving[event.direction] = event.start;
         const eventString = JSON.stringify(event);
-        players.forEach((otherPlayer) => {
-          if (otherPlayer.id !== player.id) {
-            otherPlayer.ws.send(eventString);
-          }
+        players.forEach((player) => {
+          player.ws.send(eventString);
         });
       }
     }

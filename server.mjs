@@ -1,5 +1,5 @@
 import { WebSocketServer } from "ws";
-import { SERVER_FPS, SERVER_PORT, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
+import { isAmmaMoving, SERVER_FPS, SERVER_PORT, updatePlayer, WORLD_HEIGHT, WORLD_WIDTH, } from "./common.mjs";
 let eventQueue = []; //This will have multiple events like PLayerStartMoving etc.
 const players = new Map();
 let idCounter = 0;
@@ -15,6 +15,12 @@ wss.on("connection", (ws) => {
         id,
         x,
         y,
+        moving: {
+            up: false,
+            down: false,
+            left: false,
+            right: false,
+        },
     };
     players.set(id, player);
     console.log(`Player ${id} connected`);
@@ -25,6 +31,24 @@ wss.on("connection", (ws) => {
             x: x,
             y: y,
         },
+    });
+    ws.addEventListener("message", (event) => {
+        const message = JSON.parse(event.data.toString());
+        if (isAmmaMoving(message)) {
+            console.log(`Received moving message player ${id}`, message);
+            eventQueue.push({
+                kind: "PlayerMoving",
+                id,
+                x: player.x,
+                y: player.y,
+                start: message.start,
+                direction: message.direction,
+            });
+        }
+        else {
+            console.log(`Recieved bogus-amogus message from client ${id}`, message);
+            ws.close();
+        }
     });
     ws.on("close", () => {
         console.log(`Player ${id} disconnected`);
@@ -75,9 +99,21 @@ function tick() {
                     });
                 }
                 break;
+            case "PlayerMoving": {
+                const player = players.get(event.id);
+                if (!player)
+                    continue;
+                player.moving[event.direction] = event.start;
+                const eventString = JSON.stringify(event);
+                players.forEach((player) => {
+                    player.ws.send(eventString);
+                });
+            }
         }
     }
     eventQueue.length = 0; // Clear the event queue after processing
+    // Here to so the algo simulation of the players
+    players.forEach((player) => updatePlayer(player, 1 / SERVER_FPS));
     setTimeout(tick, 1000 / SERVER_FPS);
 }
 setTimeout(tick, 1000 / SERVER_FPS);
